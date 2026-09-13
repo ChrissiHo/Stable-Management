@@ -18,12 +18,22 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState('login')
 
   const login = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) setError(error.message)
+    setLoading(false)
+  }
+
+  const register = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    const { error } = await supabase.auth.signUp({ email, password })
     if (error) setError(error.message)
     setLoading(false)
   }
@@ -59,7 +69,20 @@ export default function LoginScreen() {
           <p style={{ color: C.accent, fontSize: 13, margin: 0 }}>Deine App für den Stall</p>
         </div>
 
-        <form onSubmit={login} style={{ textAlign: 'left' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+          <button type="button" onClick={() => { setMode('login'); setError('') }} style={{
+            flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13,
+            background: mode === 'login' ? C.accent : C.border,
+            color: mode === 'login' ? '#fff' : C.muted,
+          }}>Anmelden</button>
+          <button type="button" onClick={() => { setMode('register'); setError('') }} style={{
+            flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13,
+            background: mode === 'register' ? C.accent : C.border,
+            color: mode === 'register' ? '#fff' : C.muted,
+          }}>Registrieren</button>
+        </div>
+
+        <form onSubmit={mode === 'login' ? login : register} style={{ textAlign: 'left' }}>
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', color: C.muted, fontSize: 12, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
               E-Mail
@@ -140,7 +163,7 @@ export default function LoginScreen() {
               transition: 'background 0.2s',
             }}
           >
-            {loading ? 'Anmelden...' : 'Anmelden'}
+            {loading ? (mode === 'login' ? 'Anmelden...' : 'Registrieren...') : (mode === 'login' ? 'Anmelden' : 'Registrieren')}
           </button>
         </form>
       </div>
