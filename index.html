@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Christina Höfer Sportpferde</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #0F1117; }
+
+      /* Datum-Felder: gleiche Höhe wie andere Inputs */
+      input[type="date"] {
+        color-scheme: dark;
+        cursor: pointer;
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+        height: 37px;
+        padding: 8px 10px !important;
+        font-size: 13px !important;
+        line-height: normal;
+      }
+      @media (max-width: 767px) {
+        input[type="date"] {
+          display: flex;
+          align-items: center;
+          -webkit-appearance: none;
+          appearance: none;
+        }
+      }
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1) brightness(1.5);
+        cursor: pointer;
+        opacity: 0.8;
+        padding: 2px;
+        border-radius: 3px;
+      }
+      input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+        background: rgba(124, 111, 205, 0.3);
+      }
+
+      /* Mobile responsive helpers */
+      html, body { max-width: 100vw; overflow-x: hidden; }
+      #root { max-width: 100vw; overflow-x: hidden; }
+      @media (max-width: 767px) {
+        /* Dialoge nehmen volle Breite auf Mobile */
+        [data-modal] { width: 100% !important; max-width: 100% !important; border-radius: 12px 12px 0 0 !important; position: fixed !important; bottom: 0 !important; left: 0 !important; max-height: 90vh !important; }
+        /* Verhindert horizontales Scrollen */
+        body { overflow-x: hidden; }
+        /* Touch-freundliche Tap-Targets */
+        button { min-height: 36px; }
+        input, select { font-size: 16px !important; } /* verhindert auto-zoom auf iOS */
+        /* Karten und Inhalt nie breiter als Bildschirm */
+        div { max-width: 100%; box-sizing: border-box; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
