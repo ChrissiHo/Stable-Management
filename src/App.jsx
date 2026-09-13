@@ -3,6 +3,7 @@ import { jsx, jsxs } from 'react/jsx-runtime'
 import { supabase } from './supabase.js'
 import LoginScreen from './LoginScreen.jsx'
 import AdminPanel from './AdminPanel.jsx'
+import Onboarding from './Onboarding.jsx'
 
 const D = React
 const l = { jsx, jsxs, Fragment: React.Fragment }
@@ -20,6 +21,7 @@ export default function App() {
   const [user, setUser] = D.useState(null)
   const [isAdmin, setIsAdmin] = D.useState(false)
   const [allowedSections, setAllowedSections] = D.useState(null)
+  const [stableId, setStableId] = D.useState(null)
   const [n, setN] = D.useState(gr)
   const [appLoading, setAppLoading] = D.useState(true)
 
@@ -66,6 +68,7 @@ export default function App() {
     const todosR = await supabase.from('todos').select('*').order('due_date')
     setIsAdmin(profileR.data?.role === 'admin')
     setAllowedSections(profileR.data?.allowed_sections || null)
+    setStableId(profileR.data?.stable_id || null)
     const trainingByDate = {}
     trainingR.data?.forEach(s => { if (!trainingByDate[s.date]) trainingByDate[s.date] = []; trainingByDate[s.date].push({...s, horseId: s.horse_id}) })
     const feedingPlan = {}
@@ -111,7 +114,7 @@ export default function App() {
 
   const reload = D.useCallback(() => { if (user) loadAllData(user) }, [user, loadAllData])
 
-  const t = D.useCallback(async (nd) => {
+  const t = D.useCallback(async (nd) => { // stableId available via closure
     const cur = n
     const diff = (a, b, key) => JSON.stringify(a[key]) !== JSON.stringify(b[key])
 
@@ -119,7 +122,7 @@ export default function App() {
       const added = nd.horses.filter(h => !cur.horses.find(x => x.id===h.id))
       const removed = cur.horses.filter(h => !nd.horses.find(x => x.id===h.id))
       const updated = nd.horses.filter(h => { const o=cur.horses.find(x=>x.id===h.id); return o && JSON.stringify(o)!==JSON.stringify(h) })
-      for (const h of added) { const {id,horseId,created_at,...p}=h; await supabase.from('horses').insert({...p, created_by: user.id}) }
+      for (const h of added) { const {id,horseId,created_at,...p}=h; await supabase.from('horses').insert({...p, created_by: user.id, stable_id: stableId}) }
       for (const h of updated) { const {id,horseId,created_at,created_by,...p}=h; await supabase.from('horses').update(p).eq('id',id) }
       for (const h of removed) { await supabase.from('horses').delete().eq('id',h.id) }
     }
@@ -127,7 +130,7 @@ export default function App() {
       const added = nd.health.filter(h => !cur.health.find(x=>x.id===h.id))
       const removed = cur.health.filter(h => !nd.health.find(x=>x.id===h.id))
       const updated = nd.health.filter(h => { const o=cur.health.find(x=>x.id===h.id); return o&&JSON.stringify(o)!==JSON.stringify(h) })
-      for (const h of added) { const {error:he}=await supabase.from('health_entries').insert({horse_id:h.horseId||h.horse_id,type:h.type,name:h.name,date:h.date,next_date:h.nextDate||h.next_date||null,vet:h.vet||null,notes:h.notes||null,amount:h.amount?Number(h.amount):null,created_by:user.id}); if(he){alert('Fehler beim Speichern: '+he.message);return;} }
+      for (const h of added) { const {error:he}=await supabase.from('health_entries').insert({horse_id:h.horseId||h.horse_id,type:h.type,name:h.name,date:h.date,next_date:h.nextDate||h.next_date||null,vet:h.vet||null,notes:h.notes||null,amount:h.amount?Number(h.amount):null,created_by:user.id,stable_id:stableId}); if(he){alert('Fehler beim Speichern: '+he.message);return;} }
       for (const h of updated) { await supabase.from('health_entries').update({horse_id:h.horseId||h.horse_id,type:h.type,name:h.name,date:h.date,next_date:h.nextDate||h.next_date,vet:h.vet,notes:h.notes,amount:h.amount?Number(h.amount):null}).eq('id',h.id) }
       for (const h of removed) { await supabase.from('health_entries').delete().eq('id',h.id) }
     }
@@ -135,7 +138,7 @@ export default function App() {
       const allNew = Object.entries(nd.training).flatMap(([date,ss]) => ss.map(s=>({...s,_date:date})))
       const allOld = Object.entries(cur.training).flatMap(([date,ss]) => ss.map(s=>({...s,_date:date})))
       const isNew = id => !id||(typeof id==='number'&&id>1e12)
-      for (const s of allNew.filter(s=>isNew(s.id))) { await supabase.from('training_sessions').insert({horse_id:s.horseId||s.horse_id,date:s._date,discipline:s.discipline,intensity:s.intensity,duration:s.duration,trainer:s.trainer,notes:s.notes,temperature:s.temperature||null,done:s.done||false,assigned_to:s.assigned_to||null,created_by:user.id}) }
+      for (const s of allNew.filter(s=>isNew(s.id))) { await supabase.from('training_sessions').insert({horse_id:s.horseId||s.horse_id,date:s._date,discipline:s.discipline,intensity:s.intensity,duration:s.duration,trainer:s.trainer,notes:s.notes,temperature:s.temperature||null,done:s.done||false,assigned_to:s.assigned_to||null,created_by:user.id,stable_id:stableId}) }
       for (const s of allNew.filter(s=>!isNew(s.id)&&allOld.find(x=>x.id===s.id&&JSON.stringify(x)!==JSON.stringify(s)))) { await supabase.from('training_sessions').update({horse_id:s.horseId||s.horse_id,date:s._date,discipline:s.discipline,intensity:s.intensity,duration:s.duration,trainer:s.trainer,notes:s.notes,temperature:s.temperature||null,done:s.done||false,assigned_to:s.assigned_to||null}).eq('id',s.id) }
       for (const s of allOld.filter(s=>!allNew.find(x=>x.id===s.id))) { await supabase.from('training_sessions').delete().eq('id',s.id) }
     }
@@ -143,7 +146,7 @@ export default function App() {
       const added=nd.events.filter(ev=>!cur.events.find(x=>x.id===ev.id))
       const removed=cur.events.filter(ev=>!nd.events.find(x=>x.id===ev.id))
       const updated=nd.events.filter(ev=>{const o=cur.events.find(x=>x.id===ev.id);return o&&JSON.stringify(o)!==JSON.stringify(ev)})
-      for (const ev of added) { await supabase.from('events').insert({horse_id:ev.horseId||ev.horse_id,type:ev.type,title:ev.title,date:ev.date,time:ev.time,trainer:ev.trainer,notes:ev.notes,created_by:user.id}) }
+      for (const ev of added) { await supabase.from('events').insert({horse_id:ev.horseId||ev.horse_id,type:ev.type,title:ev.title,date:ev.date,time:ev.time,trainer:ev.trainer,notes:ev.notes,created_by:user.id,stable_id:stableId}) }
       for (const ev of updated) { await supabase.from('events').update({horse_id:ev.horseId||ev.horse_id,type:ev.type,title:ev.title,date:ev.date,time:ev.time,trainer:ev.trainer,notes:ev.notes}).eq('id',ev.id) }
       for (const ev of removed) { await supabase.from('events').delete().eq('id',ev.id) }
     }
@@ -154,7 +157,7 @@ export default function App() {
       const toNum = v => (v===''||v===null||v===undefined) ? null : Number(v)
       const toNum0 = v => (v===''||v===null||v===undefined) ? 0 : Number(v)
       const trFields = r => ({horse_id:r.horseId||r.horse_id,tournament_name:r.tournamentName||r.tournament_name,date:r.date,location:r.location,discipline:r.discipline,class:r.class,height:r.height,placement:toNum(r.placement),participants:toNum(r.participants),points:toNum(r.points),rider_fault:toNum0(r.riderFault??r.rider_fault),time_fault:toNum0(r.timeFault??r.time_fault),gewinngeld:toNum0(r.gewinngeld),notes:r.notes})
-      for (const r of added) { await supabase.from('tournament_results').insert({...trFields(r),created_by:user.id}) }
+      for (const r of added) { await supabase.from('tournament_results').insert({...trFields(r),created_by:user.id,stable_id:stableId}) }
       for (const r of updated) { await supabase.from('tournament_results').update(trFields(r)).eq('id',r.id) }
       for (const r of removed) { await supabase.from('tournament_results').delete().eq('id',r.id) }
     }
@@ -162,7 +165,7 @@ export default function App() {
       const added=nd.tournamentPlan.filter(p=>!cur.tournamentPlan.find(x=>x.id===p.id))
       const removed=cur.tournamentPlan.filter(p=>!nd.tournamentPlan.find(x=>x.id===p.id))
       const updated=nd.tournamentPlan.filter(p=>{const o=cur.tournamentPlan.find(x=>x.id===p.id);return o&&JSON.stringify(o)!==JSON.stringify(p)})
-      for (const p of added) { const {data:ins}=await supabase.from('tournament_plan').insert({name:p.name,date:p.date,end_date:p.endDate||p.end_date||null,nennungsschluss:p.nennungsschluss||null,location:p.location,discipline:p.discipline,class:p.class,nennportal_link:p.nennportalLink||p.nennportal_link||null,turnier_link:p.turnierLink||p.turnier_link||null,notes:p.notes,created_by:user.id}).select().single(); if(ins?.id&&p.horseIds?.length) await supabase.from('tournament_plan_horses').insert(p.horseIds.map(hid=>({tournament_id:ins.id,horse_id:hid}))) }
+      for (const p of added) { const {data:ins}=await supabase.from('tournament_plan').insert({name:p.name,date:p.date,end_date:p.endDate||p.end_date||null,nennungsschluss:p.nennungsschluss||null,location:p.location,discipline:p.discipline,class:p.class,nennportal_link:p.nennportalLink||p.nennportal_link||null,turnier_link:p.turnierLink||p.turnier_link||null,notes:p.notes,created_by:user.id,stable_id:stableId}).select().single(); if(ins?.id&&p.horseIds?.length) await supabase.from('tournament_plan_horses').insert(p.horseIds.map(hid=>({tournament_id:ins.id,horse_id:hid}))) }
       for (const p of updated) { await supabase.from('tournament_plan').update({name:p.name,date:p.date,end_date:p.endDate||p.end_date||null,nennungsschluss:p.nennungsschluss||null,location:p.location,discipline:p.discipline,class:p.class,nennportal_link:p.nennportalLink||p.nennportal_link||null,turnier_link:p.turnierLink||p.turnier_link||null,notes:p.notes}).eq('id',p.id); await supabase.from('tournament_plan_horses').delete().eq('tournament_id',p.id); if(p.horseIds?.length) await supabase.from('tournament_plan_horses').insert(p.horseIds.map(hid=>({tournament_id:p.id,horse_id:hid}))) }
       for (const p of removed) { await supabase.from('tournament_plan').delete().eq('id',p.id) }
     }
@@ -170,7 +173,7 @@ export default function App() {
       const added=nd.costs.filter(c=>!cur.costs.find(x=>x.id===c.id))
       const removed=cur.costs.filter(c=>!nd.costs.find(x=>x.id===c.id))
       const updated=nd.costs.filter(c=>{const o=cur.costs.find(x=>x.id===c.id);return o&&JSON.stringify(o)!==JSON.stringify(c)})
-      for (const c of added) { await supabase.from('costs').insert({horse_id:c.horseId||c.horse_id,category:c.category,amount:c.amount,date:c.date,note:c.note,created_by:user.id}) }
+      for (const c of added) { await supabase.from('costs').insert({horse_id:c.horseId||c.horse_id,category:c.category,amount:c.amount,date:c.date,note:c.note,created_by:user.id,stable_id:stableId}) }
       for (const c of updated) { await supabase.from('costs').update({horse_id:c.horseId||c.horse_id,category:c.category,amount:c.amount,date:c.date,note:c.note}).eq('id',c.id) }
       for (const c of removed) { await supabase.from('costs').delete().eq('id',c.id) }
     }
@@ -178,28 +181,28 @@ export default function App() {
       for (const [hid,fd] of Object.entries(nd.feedingPlan||{})) {
         const {data:ex}=await supabase.from('feeding_plans').select('id').eq('horse_id',hid).single()
         if(ex) await supabase.from('feeding_plans').update({meals:fd.meals,zusatz:fd.zusatz,updated_at:new Date().toISOString()}).eq('horse_id',hid)
-        else await supabase.from('feeding_plans').insert({horse_id:hid,meals:fd.meals,zusatz:fd.zusatz})
+        else await supabase.from('feeding_plans').insert({horse_id:hid,meals:fd.meals,zusatz:fd.zusatz,stable_id:stableId})
       }
     }
     if (diff(nd, cur, 'customReminders')) {
       const added=nd.customReminders.filter(r=>!cur.customReminders.find(x=>x.id===r.id))
       const removed=cur.customReminders.filter(r=>!nd.customReminders.find(x=>x.id===r.id))
       const updated=nd.customReminders.filter(r=>{const o=cur.customReminders.find(x=>x.id===r.id);return o&&JSON.stringify(o)!==JSON.stringify(r)})
-      for (const r of added) { await supabase.from('custom_reminders').insert({horse_id:r.horse_id||r.horseId,title:r.title,date:r.date,repeat_days:r.repeat_days,notes:r.notes,done:r.done||false,created_by:user.id}) }
+      for (const r of added) { await supabase.from('custom_reminders').insert({horse_id:r.horse_id||r.horseId,title:r.title,date:r.date,repeat_days:r.repeat_days,notes:r.notes,done:r.done||false,created_by:user.id,stable_id:stableId}) }
       for (const r of updated) { await supabase.from('custom_reminders').update({horse_id:r.horse_id||r.horseId,title:r.title,date:r.date,repeat_days:r.repeat_days,notes:r.notes,done:r.done||false}).eq('id',r.id) }
       for (const r of removed) { await supabase.from('custom_reminders').delete().eq('id',r.id) }
     }
     if (diff(nd, cur, 'generalLinks')) {
       await supabase.from('general_links').delete().neq('id', 0)
       const links=(nd.generalLinks||[]).filter(lk=>lk.label||lk.url)
-      if(links.length) await supabase.from('general_links').insert(links.map((lk,i)=>({label:lk.label,url:lk.url,sort_order:i})))
+      if(links.length) await supabase.from('general_links').insert(links.map((lk,i)=>({label:lk.label,url:lk.url,sort_order:i,stable_id:stableId})))
     }
     if (diff(nd, cur, 'todos')) {
       const isNew=id=>!id||(typeof id==='number'&&id>1e12)
       const added=(nd.todos||[]).filter(t=>isNew(t.id))
       const removed=(cur.todos||[]).filter(t=>!(nd.todos||[]).find(x=>x.id===t.id))
       const updated=(nd.todos||[]).filter(t=>{const o=(cur.todos||[]).find(x=>x.id===t.id);return o&&JSON.stringify(o)!==JSON.stringify(t)})
-      for(const t of added){await supabase.from('todos').insert({title:t.title,horse_id:t.horse_id||null,assigned_to:t.assigned_to||null,due_date:t.due_date||null,done:t.done||false,created_by:user.id})}
+      for(const t of added){await supabase.from('todos').insert({title:t.title,horse_id:t.horse_id||null,assigned_to:t.assigned_to||null,due_date:t.due_date||null,done:t.done||false,created_by:user.id,stable_id:stableId})}
       for(const t of updated){await supabase.from('todos').update({title:t.title,horse_id:t.horse_id||null,assigned_to:t.assigned_to||null,due_date:t.due_date||null,done:t.done||false}).eq('id',t.id)}
       for(const t of removed){await supabase.from('todos').delete().eq('id',t.id)}
     }
@@ -216,6 +219,7 @@ export default function App() {
 
   if (appLoading) return l.jsx('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0F1117',flexDirection:'column',gap:16},children:[l.jsx('div',{style:{width:40,height:40,border:'3px solid #2A2D3E',borderTop:'3px solid #7C6FCD',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}),l.jsx('div',{style:{color:'#8B8FA8',fontSize:14},children:'Lade Daten…'}),l.jsx('style',{children:'@keyframes spin{to{transform:rotate(360deg)}}'})]})
   if (!user) return l.jsx(LoginScreen, {})
+  if (!stableId) return l.jsx(Onboarding, {user, onComplete:(sid,role)=>{setStableId(sid);setIsAdmin(role==='admin')}})
 
   const i = (() => {
     let a = 0
@@ -246,7 +250,7 @@ export default function App() {
     feeding: l.jsx(sf, {data:n,save:t}),
     health: l.jsx(rf, {data:n,save:t}),
     costs: l.jsx(lf, {data:n,save:t}),
-    admin: isAdmin ? l.jsx(AdminPanel, {horses:n.horses}) : null,
+    admin: isAdmin ? l.jsx(AdminPanel, {horses:n.horses, stableId, currentUserId:user?.id}) : null,
   }
 
   if(isMobile){

@@ -28,8 +28,10 @@ const ALL_SECTIONS = [
   { id: 'costs', label: 'Kosten', icon: '💰' },
 ]
 
-export default function AdminPanel({ horses }) {
+export default function AdminPanel({ horses, stableId, currentUserId }) {
   const [tab, setTab] = useState('users')
+  const [inviteLink, setInviteLink] = useState(null)
+  const [inviteLinkLoading, setInviteLinkLoading] = useState(false)
   const [users, setUsers] = useState([])
   const [accessMap, setAccessMap] = useState({})
   const [permsMap, setPermsMap] = useState({}) // userId -> Set of allowed section ids (null = all)
@@ -103,6 +105,18 @@ export default function AdminPanel({ horses }) {
     setInviteMsg({ type: 'success', text: `Email an ${inviteEmail} gesendet.` })
     setInviteEmail(''); setInviteFirstName(''); setInviteLastName('')
     loadAll()
+  }
+
+  async function generateInviteLink() {
+    setInviteLinkLoading(true)
+    const { data, error } = await supabase
+      .from('stable_invites')
+      .insert({ stable_id: stableId, created_by: currentUserId })
+      .select().single()
+    setInviteLinkLoading(false)
+    if (error || !data) return
+    const url = `${window.location.origin}?invite=${data.token}`
+    setInviteLink(url)
   }
 
   async function savePerms() {
@@ -190,7 +204,21 @@ export default function AdminPanel({ horses }) {
       {/* ── TAB: Nutzerverwaltung ── */}
       {tab === 'users' && <>
         <div style={cardStyle}>
-          <h3 style={{ color: C.navy, fontSize: 15, fontWeight: 700, margin: '0 0 16px' }}>Neuen Besitzer einladen</h3>
+          <h3 style={{ color: C.navy, fontSize: 15, fontWeight: 700, margin: '0 0 16px' }}>Nutzer einladen</h3>
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontSize: 13, color: C.muted, marginBottom: 10 }}>Erstelle einen Einladungslink und schicke ihn per WhatsApp oder E-Mail weiter. Der Link ist 7 Tage gültig.</p>
+            <button onClick={generateInviteLink} disabled={inviteLinkLoading} style={{ padding: '8px 20px', background: C.accent, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: inviteLinkLoading ? 0.6 : 1 }}>
+              {inviteLinkLoading ? 'Wird erstellt...' : '🔗 Einladungslink erstellen'}
+            </button>
+            {inviteLink && (
+              <div style={{ marginTop: 12, background: C.bg, border: `1px solid ${C.accent}`, borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 12, color: C.navy, flex: 1, wordBreak: 'break-all', fontFamily: 'monospace' }}>{inviteLink}</span>
+                <button onClick={() => { navigator.clipboard.writeText(inviteLink) }} style={{ padding: '4px 12px', background: C.accent, color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>Kopieren</button>
+              </div>
+            )}
+          </div>
+          <hr style={{ border: 'none', borderTop: `1px solid ${C.border}`, marginBottom: 20 }} />
+          <h3 style={{ color: C.navy, fontSize: 14, fontWeight: 700, margin: '0 0 12px' }}>Oder per E-Mail einladen</h3>
           <form onSubmit={inviteUser} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
             <div>
               <label style={{ display: 'block', fontSize: 12, color: C.muted, fontWeight: 600, marginBottom: 4 }}>Vorname *</label>
