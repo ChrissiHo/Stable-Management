@@ -263,7 +263,7 @@ export default function App() {
       menuOpen&&l.jsx('div',{onClick:()=>setMenuOpen(false),style:{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:300}}),
       l.jsxs('div',{style:{position:'fixed',top:0,left:0,height:'100%',width:240,background:u.card,borderRight:`1px solid ${u.border}`,zIndex:400,transform:menuOpen?'translateX(0)':'translateX(-100%)',transition:'transform 0.25s ease',display:'flex',flexDirection:'column',paddingTop:0},children:[
         l.jsxs('div',{style:{padding:'16px',borderBottom:`1px solid ${u.border}`,display:'flex',alignItems:'center',justifyContent:'space-between'},children:[
-          l.jsx('img',{src:LOGO_SRC,alt:'CHS',style:{height:64,width:'auto',objectFit:'contain',maxWidth:180}}),
+          l.jsx('div',{style:{fontSize:32},children:'🐴'}),
           l.jsx('button',{onClick:()=>setMenuOpen(false),style:{background:'none',border:'none',color:u.muted,cursor:'pointer',fontSize:20,lineHeight:1},children:'✕'})
         ]}),
         l.jsx('nav',{style:{flex:1,overflowY:'auto',padding:'10px 8px'},children:navItems.map(a=>l.jsxs('button',{onClick:()=>{e(a.id);setMenuOpen(false)},style:{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'11px 12px',background:A===a.id?u.accentSoft:'transparent',border:'none',borderRadius:8,color:A===a.id?u.accent:u.muted,cursor:'pointer',fontSize:14,fontWeight:A===a.id?600:400,marginBottom:2,textAlign:'left'},children:[
@@ -281,7 +281,7 @@ export default function App() {
   }return l.jsxs('div',{style:{display:'flex',height:'100vh',background:u.navyDark,fontFamily:"'Inter',system-ui,sans-serif",color:u.text},children:[
     l.jsxs('div',{style:{width:224,background:u.navy,borderRight:'1px solid rgba(201,168,76,0.3)',display:'flex',flexDirection:'column',padding:'24px 0'},children:[
       l.jsxs('div',{style:{padding:'0 16px 20px',borderBottom:`1px solid ${u.border}`},children:[
-        l.jsx('div',{style:{padding:'0 8px 8px',textAlign:'center'},children:l.jsx('img',{src:LOGO_SRC,alt:'Christina Höfer Sportpferde',style:{width:'100%',maxWidth:180,display:'block',margin:'0 auto'}})}),
+        l.jsx('div',{style:{padding:'8px',textAlign:'center',fontSize:36},children:'🐴'}),
         n.ownerName&&l.jsxs('div',{style:{fontSize:11,color:u.accent,textAlign:'center',fontWeight:600},children:['Hallo, ',n.ownerName,'!']})
       ]}),
       l.jsx('nav',{style:{padding:'12px 10px',flex:1,overflowY:'auto'},children:navItems.map(a=>l.jsxs('button',{onClick:()=>e(a.id),style:{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',background:A===a.id?u.accentSoft:'transparent',border:'none',borderRadius:8,color:A===a.id?u.accent:u.muted,cursor:'pointer',fontSize:13,fontWeight:A===a.id?600:400,marginBottom:2,transition:'all .15s'},children:[l.jsx('span',{style:{fontSize:15},children:a.icon}),a.label,a.id==='notifications'&&i>0&&l.jsx('span',{style:{background:u.red,color:'#fff',borderRadius:20,fontSize:10,fontWeight:800,padding:'1px 6px',minWidth:18,textAlign:'center'},children:i})]},a.id))}),

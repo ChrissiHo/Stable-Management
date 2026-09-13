@@ -48,15 +48,15 @@ export default function LoginScreen() {
         textAlign: 'center',
       }}>
         <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🐴</div>
+          <div style={{ fontSize: 52, marginBottom: 16 }}>🐴</div>
           <h1 style={{
             color: C.text,
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: 700,
             margin: '0 0 4px',
             letterSpacing: 0.5,
-          }}>Christina Höfer Sportpferde</h1>
-          <p style={{ color: C.accent, fontSize: 13, margin: 0 }}>Pferde-Management</p>
+          }}>Stall-Management</h1>
+          <p style={{ color: C.accent, fontSize: 13, margin: 0 }}>Deine App für den Stall</p>
         </div>
 
         <form onSubmit={login} style={{ textAlign: 'left' }}>
