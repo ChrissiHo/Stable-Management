@@ -207,7 +207,7 @@ export default function App() {
       for(const t of removed){await supabase.from('todos').delete().eq('id',t.id)}
     }
     await reload()
-  }, [n, user, reload])
+  }, [n, user, reload, stableId])
 
   const toggleReminderDone = D.useCallback(async (id, newDone) => {
     await supabase.from('custom_reminders').update({done: newDone}).eq('id', id)
