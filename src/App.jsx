@@ -122,7 +122,7 @@ export default function App() {
       const added = nd.horses.filter(h => !cur.horses.find(x => x.id===h.id))
       const removed = cur.horses.filter(h => !nd.horses.find(x => x.id===h.id))
       const updated = nd.horses.filter(h => { const o=cur.horses.find(x=>x.id===h.id); return o && JSON.stringify(o)!==JSON.stringify(h) })
-      for (const h of added) { const {id,horseId,created_at,...p}=h; await supabase.from('horses').insert({...p, created_by: user.id, stable_id: stableId}) }
+      for (const h of added) { const {id,horseId,created_at,...p}=h; const {error:he}=await supabase.from('horses').insert({...p, created_by: user.id, stable_id: stableId}); if(he){alert('Pferd-Fehler: '+he.message);return;} }
       for (const h of updated) { const {id,horseId,created_at,created_by,...p}=h; await supabase.from('horses').update(p).eq('id',id) }
       for (const h of removed) { await supabase.from('horses').delete().eq('id',h.id) }
     }
